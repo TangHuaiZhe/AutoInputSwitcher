@@ -4,7 +4,7 @@ let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
 
-// 纯菜单栏 App：不显示 Dock 图标、不占用主菜单。
-app.setActivationPolicy(.accessory)
+// 同时提供主窗口和状态栏入口，确保设置与退出始终可达。
+app.setActivationPolicy(.regular)
 
 app.run()
