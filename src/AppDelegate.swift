@@ -50,10 +50,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
-            button.image = NSImage(
-                systemSymbolName: "keyboard",
-                accessibilityDescription: "自动切换输入法"
-            )
+            let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns")
+            let icon = iconURL.flatMap { NSImage(contentsOf: $0) }
+                ?? NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil)
+            icon?.size = NSSize(width: 18, height: 18)
+            icon?.isTemplate = false
+            button.image = icon
+            button.imageScaling = .scaleProportionallyDown
+            button.toolTip = "自动切换输入法"
         }
 
         let menu = NSMenu()
