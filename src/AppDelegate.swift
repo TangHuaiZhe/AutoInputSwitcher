@@ -3,7 +3,9 @@ import Cocoa
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let switcher = InputSourceSwitcher()
+    private let chineseAppList = ChineseAppList()
     private var statusItem: NSStatusItem?
+    private var settingsWindowController: ChineseAppSettingsWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -16,11 +18,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWorkspace.didActivateApplicationNotification,
             object: nil
         )
+
+        switchInputSourceForFrontmostApplication()
     }
 
-    /// 每次切换到任意 app，都把输入法切回英文 ABC。
+    /// 名单中的 App 使用中文，其他 App 使用英文 ABC。
     @objc private func appDidActivate(_ notification: Notification) {
-        switcher.switchToABC()
+        switchInputSourceForFrontmostApplication(notification: notification)
+    }
+
+    private func switchInputSourceForFrontmostApplication(notification: Notification? = nil) {
+        let application = notification?.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            ?? NSWorkspace.shared.frontmostApplication
+        if chineseAppList.contains(bundleIdentifier: application?.bundleIdentifier) {
+            switcher.switchToChinese()
+        } else {
+            switcher.switchToEnglish()
+        }
+    }
+
+    @objc private func showChineseAppSettings() {
+        if settingsWindowController == nil {
+            settingsWindowController = ChineseAppSettingsWindowController(appList: chineseAppList)
+        }
+        settingsWindowController?.showWindow(nil)
+        settingsWindowController?.window?.center()
+        settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func setupStatusItem() {
@@ -33,10 +57,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
-        menu.addItem(
-            withTitle: "退出",
+
+        let settingsItem = NSMenuItem(
+            title: "中文 App 设置…",
+            action: #selector(showChineseAppSettings),
+            keyEquivalent: ""
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+        menu.addItem(.separator())
+
+        let quitItem = NSMenuItem(
+            title: "退出",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
+        )
+        quitItem.target = NSApp
+        menu.addItem(
+            quitItem
         )
         item.menu = menu
 

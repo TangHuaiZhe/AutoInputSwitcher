@@ -1,27 +1,37 @@
 import Carbon
 import Foundation
 
-/// 负责把当前键盘输入源强制切换到英文 ABC。
+/// 负责在英文 ABC 和中文拼音输入源之间切换。
 final class InputSourceSwitcher {
 
-    /// 目标输入源 ID：纯英文 ABC 键盘布局。
-    private let targetID = "com.apple.keylayout.ABC"
+    /// macOS 自带的英文 ABC 键盘布局。
+    private let englishID = "com.apple.keylayout.ABC"
 
-    /// 缓存的 ABC 输入源，启动时查一次即可复用。
+    /// macOS 自带的简体中文拼音输入法。
+    private let chineseID = "com.apple.inputmethod.SCIM.ITABC"
+
+    /// 输入源在启动时查一次即可复用。
     private let abcSource: TISInputSource?
+    private let chineseSource: TISInputSource?
 
     init() {
-        abcSource = InputSourceSwitcher.findInputSource(id: targetID)
+        abcSource = InputSourceSwitcher.findInputSource(id: englishID)
+        chineseSource = InputSourceSwitcher.findInputSource(id: chineseID)
     }
 
-    /// 若当前输入源已是 ABC 则跳过，否则切到 ABC。
-    func switchToABC() {
-        guard let abcSource else { return }
+    /// 切换到中文拼音输入法；当前已是目标输入源时跳过。
+    func switchToChinese() {
+        switchTo(source: chineseSource, id: chineseID)
+    }
 
-        if currentInputSourceID() == targetID {
-            return
-        }
-        TISSelectInputSource(abcSource)
+    /// 切换到英文 ABC；当前已是目标输入源时跳过。
+    func switchToEnglish() {
+        switchTo(source: abcSource, id: englishID)
+    }
+
+    private func switchTo(source: TISInputSource?, id: String) {
+        guard let source, currentInputSourceID() != id else { return }
+        TISSelectInputSource(source)
     }
 
     /// 读取当前键盘输入源的 ID。
